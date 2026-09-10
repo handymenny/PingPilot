@@ -1,0 +1,10 @@
+services:
+  ping-monitor:
+    build: .
+    restart: unless-stopped
+    # Add only if required
+    # cap_add:
+    #  - NET_RAW
+    #  - NET_ADMIN
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro

@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Editor directories and files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Pip cache
+.cache/pip
+
+# Ruff cache
+.ruff_cache/
+
+# pytest
+.pytest_cache/
+
+# Local config
+.env
+
+# keep actual export config out of the repository
+config.yaml
+
+# Additional
+tests/
+.git/
+.gitignore
+.dockerignore

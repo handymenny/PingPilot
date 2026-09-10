@@ -1,0 +1,89 @@
+global_config:
+  influx:
+    url: http://localhost:8086
+    database: monitoring
+    username: monitor
+    password: change-me
+    measurement: network
+    verify_tls: true
+
+  # Force all target probes and hostname resolution to IPv4 or IPv6.
+  ip_version: 4
+
+  dns:
+    # Resolver globali usati per risolvere tutti gli hostname dei target.
+    nameservers: [1.1.1.1, 8.8.8.8]
+    # Timeout in secondi prima di passare al prossimo nameserver.
+    timeout_seconds: 1
+    # Se true, prova i resolver in un ordine casuale per ogni risoluzione.
+    # Se false, li prova nell'ordine dichiarato.
+    random_order: false
+
+  scheduler:
+    # Intervallo tra l'inizio di un ciclo completo e quello successivo.
+    interval_seconds: 60
+    # Pausa minima tra la fine di un target e l'avvio del target successivo.
+    minimum_delay_between_targets_seconds: 1
+    # Se true, mescola i target una sola volta all'avvio.
+    random_order: false
+
+# Ogni target ha una destinazione unica. Il tipo di probe definisce come usarla:
+# DNS = nameserver, curl = URL, ping/traceroute = host o indirizzo IP.
+targets:
+  - name: cloudflare-dns
+    target: 1.1.1.1
+    timeout_seconds: 3
+    count: 1
+    minimum_delay_per_ping_seconds: 0
+    probe_type: dns
+    add_opts:
+      query: example.com
+      record_type: A
+
+  - name: example-web
+    target: https://example.com/
+    timeout_seconds: 3
+    count: 1
+    minimum_delay_per_ping_seconds: 0
+    probe_type: curl
+    add_opts:
+      method: GET
+      expected_status: 200
+      # Controllo opzionale: la stringa deve comparire nel body della pagina.
+      expected_text: Example Domain
+      user_agent: ping-monitor/1.0
+
+  - name: example-host
+    target: example.com
+    timeout_seconds: 3
+    count: 3
+    minimum_delay_per_ping_seconds: 1
+    probe_type: icmp_ping
+
+  - name: example-host-tcp
+    target: example.com
+    timeout_seconds: 3
+    count: 3
+    minimum_delay_per_ping_seconds: 1
+    probe_type: tcp_ping
+    add_opts:
+      port: 443
+
+  - name: example-host-traceroute-icmp
+    target: example.com
+    timeout_seconds: 3
+    count: 1
+    minimum_delay_per_ping_seconds: 0
+    probe_type: traceroute_icmp
+    add_opts:
+      max_hops: 30
+
+  - name: example-host-traceroute-tcp
+    target: example.com
+    timeout_seconds: 3
+    count: 1
+    minimum_delay_per_ping_seconds: 0
+    probe_type: traceroute_tcp
+    add_opts:
+      port: 443
+      max_hops: 30

@@ -252,7 +252,7 @@ class ProbeTests(unittest.TestCase):
             "MtrResult",
             (),
             {
-                "stdout": "MTR.0.95;1727000000;OK;127.0.0.1;1;AS64500 127.0.0.1;0.0;0.2;0.1;0.3;0.4\n",
+                "stdout": "Mtr_Version,Start_Time,Status,Host,Hop,Ip,Asn,Loss%,Last,Best,Avg,Wrst,\nMTR.0.96,1727000000,OK,127.0.0.1,1,127.0.0.1,AS64500,0.00,0.20,0.10,0.30,0.40\n",
                 "stderr": "",
                 "returncode": 0,
             },
@@ -299,6 +299,8 @@ class ProbeTests(unittest.TestCase):
             )
 
         command = run.call_args.args[0]
+        self.assertIn("--order", command)
+        self.assertEqual(command[command.index("--order") + 1], "LNBAW")
         self.assertEqual(
             command[-5:], ["--timeout", "3", "--interval", "0.5", "127.0.0.1"]
         )

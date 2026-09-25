@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import csv
 import logging
-import re
 import shutil
 import subprocess  # nosec B404
 from dataclasses import dataclass
@@ -88,23 +87,15 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
         return [failed_sample()]
     results = []
 
-    LOG.info("traceroute probe for %s, result:\n%s", destination, result.stdout.strip())
-    for row in csv.reader(result.stdout.splitlines(), delimiter=";"):
-        if len(row) < 11:
-            continue
+    for row in csv.DictReader(result.stdout.splitlines()):
         try:
-            hop = int(row[4])
-            loss_text, last_text, best_text, mean_text, worst_text = row[6:11]
-        except (ValueError, IndexError):
+            hop = int(row["Hop"])
+            loss_text = row["Loss%"]
+            best_text = row["Best"]
+            mean_text = row["Avg"]
+            worst_text = row["Wrst"]
+        except (KeyError, ValueError):
             continue
-        asn_match = re.search(r"\bAS\S+", row[5], re.IGNORECASE)
-        ip_match = re.search(
-            r"\b(?:\d{1,3}\.){3}\d{1,3}\b|\b[0-9a-f:]+:[0-9a-f:]+\b",
-            row[5],
-            re.IGNORECASE,
-        )
-        asn = asn_match.group(0) if asn_match else ""
-        ip = ip_match.group(0) if ip_match else row[5]
         loss_percent = float(loss_text)
         mean = None if mean_text == "-" else float(mean_text)
         minimum = None if best_text == "-" else float(best_text)
@@ -113,8 +104,8 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
         fields: dict[str, Scalar] = {
             "host": destination,
             "hop": hop,
-            "ip": ip,
-            "asn": asn or "",
+            "ip": row["Ip"],
+            "asn": row["Asn"],
             "loss_percent": loss_percent,
         }
         if minimum is not None:
@@ -124,7 +115,7 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
         if mean is not None:
             fields["latency_mean_ms"] = mean
             fields["latency_median_ms"] = mean
-        results.append(sample(base_tags(target, probe_type, ip), fields))
+        results.append(sample(base_tags(target, probe_type, row["Ip"]), fields))
     return results
 
 

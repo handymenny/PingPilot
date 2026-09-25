@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import re
+import csv
 import logging
+import re
 import shutil
 import subprocess  # nosec B404
 from dataclasses import dataclass
@@ -47,12 +48,14 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
     port = probe.port or 443
     command = [
         mtr,
-        "--report",
+        "--csv",
         "--report-cycles",
         str(target.count),
         "--no-dns",
-        "--report-wide",
         "--aslookup",
+        "--show-ips",
+        "--order",
+        "LNBAW",
         "--max-ttl",
         str(max_hops),
         "--timeout",
@@ -84,17 +87,24 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
         )
         return [failed_sample()]
     results = []
-    for line in result.stdout.splitlines():
-        match = re.match(
-            r"^\s*(\d+)\.\|--\s+(?:(AS\d+)\s+)?(\S+)\s+(\S+)%\s+\S+\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)",
-            line,
+
+    LOG.info("traceroute probe for %s, result:\n%s", destination, result.stdout.strip())
+    for row in csv.reader(result.stdout.splitlines(), delimiter=";"):
+        if len(row) < 11:
+            continue
+        try:
+            hop = int(row[4])
+            loss_text, last_text, best_text, mean_text, worst_text = row[6:11]
+        except (ValueError, IndexError):
+            continue
+        asn_match = re.search(r"\bAS\S+", row[5], re.IGNORECASE)
+        ip_match = re.search(
+            r"\b(?:\d{1,3}\.){3}\d{1,3}\b|\b[0-9a-f:]+:[0-9a-f:]+\b",
+            row[5],
             re.IGNORECASE,
         )
-        if not match:
-            continue
-        hop, asn, ip, loss_text, last_text, mean_text, best_text, worst_text = (
-            match.groups()
-        )
+        asn = asn_match.group(0) if asn_match else ""
+        ip = ip_match.group(0) if ip_match else row[5]
         loss_percent = float(loss_text)
         mean = None if mean_text == "-" else float(mean_text)
         minimum = None if best_text == "-" else float(best_text)
@@ -102,7 +112,7 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
         probe_type = "traceroute_tcp" if probe.tcp else "traceroute_icmp"
         fields: dict[str, Scalar] = {
             "host": destination,
-            "hop": int(hop),
+            "hop": hop,
             "ip": ip,
             "asn": asn or "",
             "loss_percent": loss_percent,

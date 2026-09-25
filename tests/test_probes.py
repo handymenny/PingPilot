@@ -247,12 +247,12 @@ class ProbeTests(unittest.TestCase):
         self.assertIn("--user-agent", run.call_args.args[0])
         self.assertIn("monitor/1.0", run.call_args.args[0])
 
-    def test_traceroute_uses_mtr_report(self) -> None:
+    def test_traceroute_uses_mtr_csv(self) -> None:
         result = type(
             "MtrResult",
             (),
             {
-                "stdout": " 1.|-- AS64500 127.0.0.1 0.0% 2 0.2 0.3 0.1 0.4 0.1\n",
+                "stdout": "MTR.0.95;1727000000;OK;127.0.0.1;1;AS64500 127.0.0.1;0.0;0.2;0.1;0.3;0.4\n",
                 "stderr": "",
                 "returncode": 0,
             },

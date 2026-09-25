@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from .models import MonitorConfig, TargetConfig
 
+# limit max hops to a reasonable number for schedule validation, even if the probe config allows more
+MAX_VALIDATION_HOPS = 20
+
 
 def estimated_target_duration(target: TargetConfig) -> float:
     """Return a conservative upper bound for one target execution."""
@@ -10,7 +13,8 @@ def estimated_target_duration(target: TargetConfig) -> float:
     probe = target.probe
     timeout = target.timeout_seconds
     if probe.type in {"traceroute_icmp", "traceroute_tcp"}:
-        attempts_per_run = probe.max_hops * target.count
+        # Keep schedule estimates practical for typical internet routes.
+        attempts_per_run = min(probe.max_hops, MAX_VALIDATION_HOPS) * target.count
     else:
         attempts_per_run = target.count
     total_attempts = attempts_per_run

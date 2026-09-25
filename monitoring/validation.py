@@ -14,8 +14,11 @@ def estimated_target_duration(target: TargetConfig) -> float:
     else:
         attempts_per_run = target.count
     total_attempts = attempts_per_run
-    delays = max(0, total_attempts - 1) * target.minimum_delay_per_ping_seconds
-    return total_attempts * timeout + delays
+    # Delay is included in the timeout budget unless the configured delay is longer.
+    inter_attempt_time = max(0, total_attempts - 1) * max(
+        timeout, target.minimum_delay_per_ping_seconds
+    )
+    return timeout + inter_attempt_time
 
 
 def validate_schedule(config: MonitorConfig) -> list[str]:

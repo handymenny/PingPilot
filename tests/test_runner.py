@@ -40,10 +40,18 @@ class RunnerTests(unittest.TestCase):
             targets=(target,),
         )
 
-        self.assertEqual(estimated_target_duration(target), 11)
-        self.assertIn(
-            "exceeding the global interval by 1.0s", validate_schedule(config)[0]
+        self.assertEqual(estimated_target_duration(target), 9)
+        self.assertIn("within the global interval", validate_schedule(config)[0])
+
+        longer_delay_target = TargetConfig(
+            name="delayed-ping",
+            target="127.0.0.1",
+            timeout_seconds=1,
+            count=3,
+            minimum_delay_per_ping_seconds=3,
+            probe=ProbeConfig(type="icmp_ping"),
         )
+        self.assertEqual(estimated_target_duration(longer_delay_target), 7)
 
     def test_random_order_is_shuffled_once_at_startup(self) -> None:
         config = MonitorConfig(

@@ -26,11 +26,12 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
     probe_type = "traceroute_tcp" if probe.tcp else "traceroute_icmp"
 
     def failed_sample() -> Sample:
+        tags = base_tags(target, probe_type)
+        tags["hop"] = "0"
         return sample(
-            base_tags(target, probe_type),
+            tags,
             {
                 "host": target.target,
-                "hop": 0,
                 "ip": "",
                 "asn": "",
                 "loss_percent": 100.0,
@@ -103,7 +104,6 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
         probe_type = "traceroute_tcp" if probe.tcp else "traceroute_icmp"
         fields: dict[str, Scalar] = {
             "host": destination,
-            "hop": hop,
             "ip": row["Ip"],
             "asn": row["Asn"],
             "loss_percent": loss_percent,
@@ -114,8 +114,9 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
             fields["latency_max_ms"] = maximum
         if mean is not None:
             fields["latency_mean_ms"] = mean
-            fields["latency_median_ms"] = mean
-        results.append(sample(base_tags(target, probe_type, row["Ip"]), fields))
+        tags = base_tags(target, probe_type, row["Ip"])
+        tags["hop"] = str(hop)
+        results.append(sample(tags, fields))
     return results
 
 

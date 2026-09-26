@@ -278,8 +278,10 @@ class ProbeTests(unittest.TestCase):
         self.assertEqual(results[0].fields["latency_min_ms"], 0.1)
         self.assertEqual(results[0].fields["latency_max_ms"], 0.4)
         self.assertEqual(results[0].fields["latency_mean_ms"], 0.3)
-        self.assertEqual(results[0].fields["latency_median_ms"], 0.3)
         self.assertEqual(results[0].fields["loss_percent"], 0.0)
+        self.assertEqual(results[0].tags["hop"], "1")
+        self.assertNotIn("hop", results[0].fields)
+        self.assertNotIn("latency_median_ms", results[0].fields)
 
     def test_traceroute_passes_timeout_and_interval_to_mtr(self) -> None:
         result = type("MtrResult", (), {"stdout": "", "stderr": "", "returncode": 0})()

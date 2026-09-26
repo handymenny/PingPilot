@@ -239,6 +239,6 @@ The value of `global_config.influx.measurement` is used as the measurement name 
 
 Common tags are `target`, `name`, `type`, and `resolved_ip` (the IP address to which the target resolves).
 
-All probes emit `loss_percent` and, when at least one response exists, emit `latency_min_ms`, `latency_max_ms`, `latency_mean_ms`, and `latency_median_ms`.
+All probes emit `loss_percent` and, when at least one response exists, emit `latency_min_ms`, `latency_max_ms`, and `latency_mean_ms`. Non-traceroute probes also emit `latency_median_ms`.
 
-Traceroute measurements also have these additional tags for each reported hop: `host`, `hop`, `ip`, and `asn`.
+Traceroute measurements are emitted once per reported hop. The hop number is stored as the `hop` tag, while `host`, `ip`, and `asn` are fields.

@@ -38,7 +38,10 @@ def build_probe(config: ProbeConfig):
             return TcpProbe(config.port)
         case "traceroute_icmp" | "traceroute_tcp":
             return TracerouteProbe(
-                config.type.endswith("tcp"), config.max_hops, config.port
+                config.type.endswith("tcp"),
+                config.max_hops,
+                config.port,
+                config.first_ttl,
             )
         case _:
             raise ValueError(f"Unknown probe type: {config.type}")

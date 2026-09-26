@@ -82,6 +82,15 @@ def _ip_version(mapping: Mapping[str, object]) -> IpVersion:
 def _probe(probe_type_value: object, options_value: object) -> ProbeConfig:
     probe_type = str(probe_type_value).lower()
     raw = _mapping(options_value, "add_opts")
+    max_hops = _required_int(raw, "max_hops", 30)
+    first_ttl = _required_int(raw, "first_ttl", 1)
+    if probe_type in {"traceroute_icmp", "traceroute_tcp"}:
+        if max_hops < 1:
+            raise ValueError("max_hops must be greater than 0")
+        if first_ttl < 1:
+            raise ValueError("first_ttl must be greater than 0")
+        if first_ttl > max_hops:
+            raise ValueError("first_ttl must not be greater than max_hops")
     return ProbeConfig(
         type=probe_type,
         query=None if raw.get("query") is None else str(raw["query"]),
@@ -93,7 +102,8 @@ def _probe(probe_type_value: object, options_value: object) -> ProbeConfig:
         else str(raw["expected_text"]),
         user_agent=None if raw.get("user_agent") is None else str(raw["user_agent"]),
         port=_int(raw, "port"),
-        max_hops=_required_int(raw, "max_hops", 30),
+        max_hops=max_hops,
+        first_ttl=first_ttl,
     )
 
 

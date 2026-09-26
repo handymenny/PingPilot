@@ -77,6 +77,7 @@ targets:
     probe_type: traceroute_icmp
     add_opts:
       max_hops: 30
+      first_ttl: 1
 
   - name: example-host-traceroute-tcp
     target: example.com
@@ -87,3 +88,4 @@ targets:
     add_opts:
       port: 443
       max_hops: 30
+      first_ttl: 1

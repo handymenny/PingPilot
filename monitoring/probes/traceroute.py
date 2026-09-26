@@ -17,6 +17,7 @@ class TracerouteProbe:
     tcp: bool = False
     max_hops: int = 30
     port: int | None = None
+    first_ttl: int = 1
 
     def run(self, target: TargetConfig) -> list[Sample]:
         return _run_traceroute(target, self)
@@ -44,6 +45,7 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
         return [failed_sample()]
     destination = target.target
     max_hops = probe.max_hops
+    measured_hops = max_hops - probe.first_ttl + 1
     timeout = target.timeout_seconds
     port = probe.port or 443
     command = [
@@ -58,6 +60,8 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
         "LNBAW",
         "--max-ttl",
         str(max_hops),
+        "--first-ttl",
+        str(probe.first_ttl),
         "--timeout",
         str(timeout),
     ]
@@ -73,7 +77,7 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
             command,
             capture_output=True,
             text=True,
-            timeout=timeout * target.count * max_hops + 1,
+            timeout=timeout * target.count * measured_hops + 1,
             check=False,
         )  # nosec B603
     except Exception as exc:
@@ -123,4 +127,4 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
 def probe_traceroute(
     target: TargetConfig, probe: ProbeConfig, tcp: bool
 ) -> list[Sample]:
-    return TracerouteProbe(tcp, probe.max_hops, probe.port).run(target)
+    return TracerouteProbe(tcp, probe.max_hops, probe.port, probe.first_ttl).run(target)

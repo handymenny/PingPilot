@@ -27,6 +27,7 @@ class ProbeConfig:
     user_agent: str | None = None
     port: int | None = None
     max_hops: int = 30
+    first_ttl: int = 1
 
 
 @dataclass(frozen=True, slots=True)

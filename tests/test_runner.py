@@ -25,6 +25,17 @@ class FakeInflux:
 
 
 class RunnerTests(unittest.TestCase):
+    def test_schedule_validation_accounts_for_first_ttl(self) -> None:
+        target = TargetConfig(
+            name="route",
+            target="127.0.0.1",
+            timeout_seconds=2,
+            count=2,
+            probe=ProbeConfig(type="traceroute_icmp", max_hops=10, first_ttl=4),
+        )
+
+        self.assertEqual(estimated_target_duration(target), 28)
+
     def test_schedule_validation_accounts_for_count_timeout_and_delay(self) -> None:
         target = TargetConfig(
             name="slow-ping",

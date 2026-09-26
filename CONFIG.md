@@ -194,6 +194,7 @@ The `target` is a hostname or IP address.
   probe_type: traceroute_icmp
   add_opts:
     max_hops: 30
+    first_ttl: 1
 ```
 
 ### TCP traceroute
@@ -215,9 +216,10 @@ The `target` is a hostname or IP address. A TCP port is required.
 | `add_opts` key | Required by | Meaning |
 |---|---|---|
 | `max_hops` | Both traceroute probes | Maximum number of hops to inspect |
+| `first_ttl` | Both traceroute probes | TTL of the first hop to inspect; must be between 1 and `max_hops` |
 | `port` | `traceroute_tcp` | TCP destination port |
 
-Traceroute uses `mtr`. It emits a measurement for each reported hop rather than one aggregate target measurement.
+Traceroute uses `mtr`. It emits a measurement for each reported hop rather than one aggregate target measurement. `first_ttl` skips all hops before the configured TTL.
 
 ## Repetitions, timeouts, and loss
 

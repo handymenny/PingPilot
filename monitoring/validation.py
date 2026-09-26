@@ -13,8 +13,12 @@ def estimated_target_duration(target: TargetConfig) -> float:
     probe = target.probe
     timeout = target.timeout_seconds
     if probe.type in {"traceroute_icmp", "traceroute_tcp"}:
-        # Keep schedule estimates practical for typical internet routes.
-        attempts_per_run = min(probe.max_hops, MAX_VALIDATION_HOPS) * target.count
+        # cap max_hops to a reasonable number for schedule validation.
+        measured_hops = max(
+            min(probe.max_hops, MAX_VALIDATION_HOPS) - probe.first_ttl + 1,
+            0,
+        )
+        attempts_per_run = measured_hops * target.count
     else:
         attempts_per_run = target.count
     total_attempts = attempts_per_run

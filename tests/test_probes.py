@@ -308,6 +308,21 @@ class ProbeTests(unittest.TestCase):
             command[-5:], ["--timeout", "3", "--interval", "0.5", "127.0.0.1"]
         )
 
+    def test_traceroute_uses_first_ttl(self) -> None:
+        result = type("MtrResult", (), {"stdout": "", "stderr": "", "returncode": 0})()
+        with patch.object(traceroute.shutil, "which", return_value="mtr"), patch(
+            "monitoring.probes.traceroute.run_process", return_value=result
+        ) as run:
+            target = TargetConfig(name="test", target="127.0.0.1")
+            probes.probe_traceroute(
+                target,
+                ProbeConfig(type="traceroute_icmp", max_hops=10, first_ttl=4),
+                False,
+            )
+
+        command = run.call_args.args[0]
+        self.assertEqual(command[command.index("--first-ttl") + 1], "4")
+
 
 if __name__ == "__main__":
     unittest.main()

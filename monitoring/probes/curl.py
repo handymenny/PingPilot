@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import shutil
 import logging
-import subprocess  # nosec B404
 import time
 import urllib.parse
 from dataclasses import dataclass
@@ -10,6 +9,7 @@ from dataclasses import dataclass
 from ..influx import require_http_url
 from ..models import ProbeConfig, Sample, Scalar, TargetConfig, base_tags, sample
 from .probe_common import latency_fields, resolved_ip
+from ..process import run as run_process
 
 
 LOG = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ def _run_curl(target_cfg: TargetConfig, probe: CurlProbe) -> list[Sample]:
         content = ""
         latency = None
         try:
-            result = subprocess.run(
+            result = run_process(
                 command + ["--write-out", "\n%{http_code}\n%{time_total}"],
                 capture_output=True,
                 text=True,

@@ -1,11 +1,11 @@
 import ipaddress
 import logging
 import shutil
-import subprocess  # nosec B404
 from statistics import median
 import random
 
 from ..models import DnsConfig, Scalar
+from ..process import run as run_process
 
 
 LOG = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ def resolved_ip(host: str, dns: DnsConfig = DnsConfig(), ip_version: int = 4) ->
         command.extend([host, "AAAA" if ip_version == 6 else "A"])
 
         try:
-            result = subprocess.run(
+            result = run_process(
                 command,
                 capture_output=True,
                 text=True,

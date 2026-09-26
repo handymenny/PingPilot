@@ -58,8 +58,8 @@ class ProbeTests(unittest.TestCase):
                 "returncode": 1,
             },
         )()
-        with patch.object(icmp.shutil, "which", return_value="fping"), patch.object(
-            icmp.subprocess, "run", return_value=result
+        with patch.object(icmp.shutil, "which", return_value="fping"), patch(
+            "monitoring.probes.icmp.run_process", return_value=result
         ) as run:
             latencies, _ = icmp._run_icmp("127.0.0.1", 3, 3, 0.5)
 
@@ -77,9 +77,9 @@ class ProbeTests(unittest.TestCase):
         result = type(
             "KdigResult", (), {"stdout": "1.1.1.1\n", "stderr": "", "returncode": 0}
         )()
-        with patch.object(
-            probe_common.shutil, "which", return_value="kdig"
-        ), patch.object(probe_common.subprocess, "run", return_value=result) as run:
+        with patch.object(probe_common.shutil, "which", return_value="kdig"), patch(
+            "monitoring.probes.probe_common.run_process", return_value=result
+        ) as run:
             resolved = probe_common.resolved_ip("example.com")
 
         self.assertEqual(resolved, "1.1.1.1")
@@ -89,9 +89,9 @@ class ProbeTests(unittest.TestCase):
         result = type(
             "KdigResult", (), {"stdout": "2001:db8::1\n", "stderr": "", "returncode": 0}
         )()
-        with patch.object(
-            probe_common.shutil, "which", return_value="kdig"
-        ), patch.object(probe_common.subprocess, "run", return_value=result) as run:
+        with patch.object(probe_common.shutil, "which", return_value="kdig"), patch(
+            "monitoring.probes.probe_common.run_process", return_value=result
+        ) as run:
             resolved = probe_common.resolved_ip("example.com", DnsConfig(), 6)
 
         self.assertEqual(resolved, "2001:db8::1")
@@ -111,7 +111,7 @@ class ProbeTests(unittest.TestCase):
         )()
         with patch.object(tcp, "resolved_ip", return_value="127.0.0.1"), patch.object(
             tcp.shutil, "which", return_value="tcpping"
-        ), patch.object(tcp.subprocess, "run", return_value=result) as run:
+        ), patch("monitoring.probes.tcp.run_process", return_value=result) as run:
             target = TargetConfig(name="test", target="example.com")
             fields = probes.probe_tcp(target, ProbeConfig(type="tcp_ping", port=443))[
                 0
@@ -136,7 +136,7 @@ class ProbeTests(unittest.TestCase):
         )()
         with patch.object(tcp, "resolved_ip", return_value="127.0.0.1"), patch.object(
             tcp.shutil, "which", return_value="tcpping"
-        ), patch.object(tcp.subprocess, "run", return_value=result) as run:
+        ), patch("monitoring.probes.tcp.run_process", return_value=result) as run:
             target = TargetConfig(
                 name="test",
                 target="example.com",
@@ -168,7 +168,7 @@ class ProbeTests(unittest.TestCase):
 
     def test_icmp_command_error_is_reported_as_loss(self) -> None:
         with patch.object(icmp.shutil, "which", return_value="fping"), patch.object(
-            icmp.subprocess, "run", side_effect=OSError("fping unavailable")
+            icmp, "run_process", side_effect=OSError("fping unavailable")
         ):
             target = TargetConfig(name="test", target="127.0.0.1")
             fields = probes.probe_icmp(target, ProbeConfig(type="icmp_ping"))[0].fields
@@ -179,8 +179,9 @@ class ProbeTests(unittest.TestCase):
     def test_tcp_command_error_is_reported_as_loss(self) -> None:
         with patch.object(tcp, "resolved_ip", return_value="127.0.0.1"), patch.object(
             tcp.shutil, "which", return_value="tcpping"
-        ), patch.object(
-            tcp.subprocess, "run", side_effect=OSError("tcpping unavailable")
+        ), patch(
+            "monitoring.probes.tcp.run_process",
+            side_effect=OSError("tcpping unavailable"),
         ):
             target = TargetConfig(name="test", target="example.com")
             fields = probes.probe_tcp(target, ProbeConfig(type="tcp_ping", port=443))[
@@ -202,7 +203,7 @@ class ProbeTests(unittest.TestCase):
         )()
         with patch.object(dns, "resolved_ip", return_value="8.8.8.8"), patch.object(
             dns.shutil, "which", return_value="kdig"
-        ), patch.object(dns.subprocess, "run", return_value=result):
+        ), patch("monitoring.probes.dns.run_process", return_value=result):
             target = TargetConfig(name="dns", target="example.com")
             fields = probes.probe_dns(
                 target, ProbeConfig(type="dns", query="example.com")
@@ -218,8 +219,8 @@ class ProbeTests(unittest.TestCase):
             (),
             {"stdout": "page body\n200\n0.012", "stderr": "", "returncode": 0},
         )()
-        with patch.object(curl, "shutil") as shutil_module, patch.object(
-            curl.subprocess, "run", return_value=result
+        with patch.object(curl, "shutil") as shutil_module, patch(
+            "monitoring.probes.curl.run_process", return_value=result
         ):
             shutil_module.which.return_value = "curl"
             samples = probes.probe_curl(target, probe)
@@ -236,8 +237,8 @@ class ProbeTests(unittest.TestCase):
             (),
             {"stdout": "\n200\n0.012", "stderr": "", "returncode": 0},
         )()
-        with patch.object(curl, "shutil") as shutil_module, patch.object(
-            curl.subprocess, "run", return_value=result
+        with patch.object(curl, "shutil") as shutil_module, patch(
+            "monitoring.probes.curl.run_process", return_value=result
         ) as run:
             shutil_module.which.return_value = "curl"
             probes.probe_curl(
@@ -257,8 +258,8 @@ class ProbeTests(unittest.TestCase):
                 "returncode": 0,
             },
         )()
-        with patch.object(traceroute.shutil, "which", return_value="mtr"), patch.object(
-            traceroute.subprocess, "run", return_value=result
+        with patch.object(traceroute.shutil, "which", return_value="mtr"), patch(
+            "monitoring.probes.traceroute.run_process", return_value=result
         ):
             target = TargetConfig(
                 name="test",
@@ -285,8 +286,8 @@ class ProbeTests(unittest.TestCase):
 
     def test_traceroute_passes_timeout_and_interval_to_mtr(self) -> None:
         result = type("MtrResult", (), {"stdout": "", "stderr": "", "returncode": 0})()
-        with patch.object(traceroute.shutil, "which", return_value="mtr"), patch.object(
-            traceroute.subprocess, "run", return_value=result
+        with patch.object(traceroute.shutil, "which", return_value="mtr"), patch(
+            "monitoring.probes.traceroute.run_process", return_value=result
         ) as run:
             target = TargetConfig(
                 name="test",

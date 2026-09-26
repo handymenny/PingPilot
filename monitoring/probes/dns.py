@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 import logging
 import shutil
-import subprocess  # nosec B404
 import time
 from dataclasses import dataclass
 
@@ -16,6 +15,7 @@ from ..models import (
     sample,
 )
 from .probe_common import latency_fields, resolved_ip
+from ..process import run as run_process
 
 
 LOG = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ class DnsProbe:
         ip = ""
         for attempt in range(target_cfg.count):
             try:
-                result = subprocess.run(
+                result = run_process(
                     [
                         kdig,
                         f"+time={timeout_seconds}",

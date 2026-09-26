@@ -3,11 +3,11 @@ from __future__ import annotations
 import re
 import logging
 import shutil
-import subprocess  # nosec B404
 from dataclasses import dataclass
 
 from ..models import ProbeConfig, Sample, Scalar, TargetConfig, base_tags, sample
 from .probe_common import latency_fields, resolved_ip
+from ..process import run as run_process
 
 
 LOG = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ class TcpProbe:
             command.insert(1, "-6")
         fields: dict[str, Scalar] = {}
         try:
-            result = subprocess.run(
+            result = run_process(
                 command,
                 capture_output=True,
                 text=True,

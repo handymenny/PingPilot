@@ -4,9 +4,9 @@
 import argparse
 import logging
 from pathlib import Path
-from pyexpat.errors import messages
 
 from monitoring.config import load_config
+from monitoring.process import install_shutdown_handler
 from monitoring.runner import monitor
 from monitoring.validation import validate_full_cycle, validate_schedule
 
@@ -24,6 +24,7 @@ def main() -> None:
         format="%(asctime)s %(levelname)s %(message)s",
     )
     config = load_config(args.config)
+    install_shutdown_handler()
     logger = logging.getLogger("network-monitor")
     for message in validate_schedule(config):
         if "exceeding" in message:

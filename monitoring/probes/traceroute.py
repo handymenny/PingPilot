@@ -3,10 +3,10 @@ from __future__ import annotations
 import csv
 import logging
 import shutil
-import subprocess  # nosec B404
 from dataclasses import dataclass
 
 from ..models import ProbeConfig, Sample, Scalar, TargetConfig, base_tags, sample
+from ..process import run as run_process
 
 
 LOG = logging.getLogger(__name__)
@@ -69,7 +69,7 @@ def _run_traceroute(target: TargetConfig, probe: TracerouteProbe) -> list[Sample
         command.append("--inet6")
     command.append(destination)
     try:
-        result = subprocess.run(
+        result = run_process(
             command,
             capture_output=True,
             text=True,

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import shutil
-import subprocess  # nosec B404
 from dataclasses import dataclass
 
 from ..models import (
@@ -14,6 +13,7 @@ from ..models import (
     sample,
 )
 from .probe_common import latency_fields, resolved_ip
+from ..process import run as run_process
 
 
 LOG = logging.getLogger(__name__)
@@ -94,7 +94,7 @@ def _run_icmp(
     latencies: list[float | None] = []
     output = ""
 
-    result = subprocess.run(
+    result = run_process(
         command,
         capture_output=True,
         text=True,
